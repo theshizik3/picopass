@@ -8,9 +8,13 @@ type PasswordRepo struct {
 	db *sql.DB
 }
 
-func NewPasswordRepo(db *sql.DB) error {
+func NewPasswordRepo(db *sql.DB) (*PasswordRepo, error) {
 	r := PasswordRepo{db: db}
-	return r.Init()
+	err := r.Init()
+	if err != nil {
+		return nil, err
+	}
+	return &r, nil
 }
 
 func (r *PasswordRepo) Init() error {
@@ -46,7 +50,7 @@ func (r *PasswordRepo) WriteEntry(e Entry) error {
 	return err
 }
 
-func (r *PasswordRepo) ChangeEntry(id int, e Entry) error {
+func (r *PasswordRepo) ChangeEntry(e Entry) error {
 	_, err := r.db.Exec(`UPDATE Passwords SET
 		service_name = ?,
 		url = ?,
@@ -68,6 +72,7 @@ func (r *PasswordRepo) GetEntries() ([]*Entry, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	entries := []*Entry{}
 	for rows.Next() {
 		e := &Entry{}
